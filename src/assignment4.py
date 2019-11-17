@@ -25,12 +25,12 @@ def load_data(es: Elasticsearch) -> None:
     -------
     None
     """
-    # tf = tarfile.open("/src/wiki-small.tar.gz")
-    # tf.extractall()
+    tf = tarfile.open("wiki-small.tar.gz")
+    tf.extractall()
     i = 1
 
     # for file in os.listdir("/workdir"):
-    for x in os.walk('./en'):
+    for x in os.walk('/en'):
         for y in glob.glob(os.path.join(x[0], '*.html')):
             # print(y)
             if y.endswith(".html"):
@@ -42,7 +42,7 @@ def load_data(es: Elasticsearch) -> None:
                         'body': tuple[1],
                     }
                     data = json.dumps(tmp)
-                    es.index(index='wikipedia', doc_type='html', id=i, body=data)
+                    es.index(index='wikipedia', id=i, body=data)
                     i = i + 1
                     # print("id:" + ' ' + str(i) + " added")
     # Fill in the code here
@@ -89,38 +89,89 @@ def create_wikipedia_index(ic: IndicesClient) -> None:
 
     index_name = 'wikipedia'
 
-    with open('./stopwords.txt') as f:
-    # with open('/usr/share/elasticsearch/config/stopwords.txt') as f:
-        content = f.readlines()
-    content = [x.strip() for x in content]
-    ic.create(
-        index=index_name,
-        body={
-            'settings': {
-                'analysis': {
-                    'analyzer': {
-                        'my_analyzer': {
-                            'type': 'custom',
-                            'tokenizer': 'standard',
-                            'filter': ['lowercase',
-                                       'my_stops']
+    # with open('./stopwords.txt') as f:
+    #     # with open('/usr/share/elasticsearch/config/stopwords.txt') as f:
+    #     content = f.readlines()
+    # content = [x.strip() for x in content]
+    if ic.exists(index_name):
+        ic.close(index='wikipedia')
+        ic.put_settings(
+            index=index_name,
+            body={
+                'settings': {
+                    'analysis': {
+                        'analyzer': {
+                            'my_analyzer': {
+                                'type': 'custom',
+                                'tokenizer': 'standard',
+                                'filter': ['lowercase', 'my_stops', ]
+                            },
                         },
-
+                        'filter': {
+                            'my_stops': {
+                                'type': 'stop',
+                                # 'stopwords': content,
+                                'stopwords_path': 'stopwords.txt',
+                            },
+                        },
                     },
                 },
-                'filter': {
-                    'my_stops': {
-                        'type': 'stop',
-                        # 'stopwords_path': '/usr/share/elasticsearch/config/stopwords.txt'
-                        'stopwords_path': content,
+                "mappings": {
+                    "properties": {
+                        "title": {
+                            "type": "text",
+                            "analyzer": "my_analyzer",
+                        },
+                        "body": {
+                            "type": "text",
+                            "analyzer": "my_analyzer",
+                        }
                     }
                 }
-            }
-        },
-        # Will ignore 400 errors, remove to ensure you're prompted
-        ignore=400
-    )
-    print("------------------------------index done!------------------------------")
+
+            },
+            # Will ignore 400 errors, remove to ensure you're prompted
+        )
+        ic.open(index='wikipedia')
+
+    else:
+        ic.create(
+            index=index_name,
+            body={
+                'settings': {
+                    'analysis': {
+                        'analyzer': {
+                            'my_analyzer': {
+                                'type': 'custom',
+                                'tokenizer': 'standard',
+                                'filter': ['lowercase', 'my_stops', ]
+                            },
+                        },
+                        'filter': {
+                            'my_stops': {
+                                'type': 'stop',
+                                # 'stopwords': content,
+                                'stopwords_path': 'stopwords.txt',
+                            },
+                        },
+                    },
+                },
+                "mappings": {
+                        "properties": {
+                            "title": {
+                                "type": "text",
+                                "analyzer": "my_analyzer",
+                            },
+                            "body": {
+                                "type": "text",
+                                "analyzer": "my_analyzer",
+                            }
+                        }
+                }
+
+            },
+            # Will ignore 400 errors, remove to ensure you're prompted
+        )
 
 
 def mode():

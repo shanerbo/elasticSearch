@@ -19,7 +19,7 @@ def main():
     es = Elasticsearch()
     ic = IndicesClient(es)
     a4.create_wikipedia_index(ic)
-    # a4.load_data(es)
+    a4.load_data(es)
 
     print("The top ranked title:", search_and_rank(es))
     add_synonyms_to_index(ic)
@@ -49,11 +49,22 @@ def search_and_rank(es: Elasticsearch) -> str:
                     body={
                         'query': {
                             "bool": {
-                                'should': [{'match': {'body': 'lake'}},
-                                           {'match': {'body': 'tour'}}],
+                                'must': [
+                                    {
+                                        'bool': {
+                                            'should': [
+                                                {'match': {'body': 'lake'}},
+                                                {'match': {'body': 'tour'}},
+                                            ],
+                                        }
+                                    }
+                                ],
                                 'must_not': [{'match_phrase': {'body': 'please improve this article if you can.'}}],
-                                'should': [{'match': {'body': {'query': 'BC', 'boost': 5}}},
-                                           {'match': {'body': {'query': 'AB', 'boost': 2}}}],
+                                'should': [{'match': {'body': {'query': 'BC', 'boost': 2}}},
+                                           {'match': {'body': {'query': 'AB', 'boost': 1}}},
+                                           {'match': {'body': {'query': 'WA', 'boost': 1}}}],
+                                # 'should': [{'match': {'body': 'BC'}},
+                                #            {'match': {'body': 'AB'}}],
                             }
                         }
 
@@ -84,6 +95,7 @@ def add_synonyms_to_index(ic: IndicesClient) -> None:
         # with open('/usr/share/elasticsearch/config/stopwords.txt') as f:
         content = f.readlines()
     content = [x.strip() for x in content]
+    ic.close(index='wikipedia')
     ic.put_settings(
         index=index_name,
         body={
@@ -94,32 +106,42 @@ def add_synonyms_to_index(ic: IndicesClient) -> None:
                             'type': 'custom',
                             'tokenizer': 'standard',
                             'filter': ['lowercase',
-                                       'my_stops']
+                                       'my_stops',
+                                       'my_synonyms']
                         },
-
+                    },
+                    'filter': {
+                        'my_stops': {
+                            'type': 'stop',
+                            'stopwords_path': 'stopwords.txt'
+                            # 'stopwords': content,
+                        },
+                        "my_synonyms": {
+                            "type": "synonym",
+                            "synonyms": [
+                                "BC => British Columbia",
+                                "AB => Alberta",
+                                "WA => Washington"
+                            ]
+                        }
                     },
                 },
-                'filter': {
-                    'my_stops': {
-                        'type': 'stop',
-                        # 'stopwords_path': '/usr/share/elasticsearch/config/stopwords.txt'
-                        'stopwords_path': content,
+            },
+            "mappings": {
+                "properties": {
+                    "title": {
+                        "type": "text",
+                        "analyzer": "my_analyzer"
                     },
-                    "my_synonyms": {
-                        "type": "synonym",
-                        "synonyms": [
-                            "British Columbia, british columbia => BC",
-                            "Alberta, alberta => AB",
-                            "Washington, washington => WA",
-                        ]
+                    "body": {
+                        "type": "text",
+                        "analyzer": "my_analyzer"
                     }
                 }
             }
         },
-        # Will ignore 400 errors, remove to ensure you're prompted
-        ignore=400
     )
-    print("-----------------------------synonyms done!----------------------------")
+    ic.open(index='wikipedia')
 
 
 def how_does_rank_work() -> str:

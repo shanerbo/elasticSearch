@@ -17,7 +17,7 @@ def main():
     es = Elasticsearch()
     ic = IndicesClient(es)
     a4.create_wikipedia_index(ic)
-    # a4.load_data(es)
+    a4.load_data(es)
 
     print(count_documents(es), "documents loaded")
 

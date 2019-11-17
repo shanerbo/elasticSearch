@@ -15,7 +15,7 @@ def main():
     es = Elasticsearch()
     ic = IndicesClient(es)
     a4.create_wikipedia_index(ic)
-    # a4.load_data(es)
+    a4.load_data(es)
 
     print(f"There are {filter(es)['hits']['total']['value']} documents contains 'lake' or 'tour'")
     print(
@@ -73,8 +73,16 @@ def search_without_improvement(es: Elasticsearch) -> Dict[str, Any]:
                     body={
                         'query': {
                             "bool": {
-                                'should': [{'match': {'body': 'lake'}},
-                                           {'match': {'body': 'tour'}}],
+                                'must': [
+                                    {
+                                        'bool': {
+                                            'should': [
+                                                {'match': {'body': 'lake'}},
+                                                {'match': {'body': 'tour'}},
+                                            ],
+                                        }
+                                    }
+                                ],
                                 'must_not': [{'match_phrase': {'body': 'please improve this article if you can.'}}]
                             }
                         }
