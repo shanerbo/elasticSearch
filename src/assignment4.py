@@ -29,10 +29,8 @@ def load_data(es: Elasticsearch) -> None:
     tf.extractall()
     i = 1
 
-    # for file in os.listdir("/workdir"):
-    for x in os.walk('/en'):
+    for x in os.walk('./en'):
         for y in glob.glob(os.path.join(x[0], '*.html')):
-            # print(y)
             if y.endswith(".html"):
                 with open(y, 'r') as f:
                     html_string = f.read()
