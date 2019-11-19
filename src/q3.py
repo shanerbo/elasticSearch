@@ -154,7 +154,16 @@ def how_does_rank_work() -> str:
     str, the answer
     """
     # Fill in the answer here
-    return 'answer goes here'
+    ans = "\nThe Elasticsearch will scan through all doc that contains user's keyword in query, \n" \
+          "Elasticsearch sort matching result by using relevance score, this score is based on \n" \
+          "how well this document matches user's query. The higher score, the more relevant doc. \n" \
+          "Elasticsearch uses numerical algorithm to determinate the most textually similar to \n" \
+          "the query. Once user inputs a query, Elasticsearch will assign a score to each document.\n" \
+          " In Q3.2, we only interested in tour or lake in AB, BC and WA, so we need to boost\n" \
+          "documents that contains BC, AB and WA, and BC should be the top of result. That's so we \n" \
+          "have to boost score of documents contains BC. Also we need to, for example, bind BC and \n" \
+          "British Columbia together. So that we would not missing any documents \n"
+    return ans
 
 
 if __name__ == "__main__":

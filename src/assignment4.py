@@ -25,24 +25,24 @@ def load_data(es: Elasticsearch) -> None:
     -------
     None
     """
-    tf = tarfile.open("wiki-small.tar.gz")
-    tf.extractall()
+    tf = tarfile.open("wiki-small.tar.gz", "r:gz")
+    allFiles = tf.getnames()
+
     i = 1
 
-    for x in os.walk('./en'):
-        for y in glob.glob(os.path.join(x[0], '*.html')):
-            if y.endswith(".html"):
-                with open(y, 'r') as f:
-                    html_string = f.read()
-                    tuple = parse_html(html_string)
-                    tmp = {
-                        'title': tuple[0],
-                        'body': tuple[1],
-                    }
-                    data = json.dumps(tmp)
-                    es.index(index='wikipedia', id=i, body=data)
-                    i = i + 1
-                    # print("id:" + ' ' + str(i) + " added")
+    for member in allFiles:
+        html = tf.extractfile(member)
+        if html is not None:
+            html_string = html.read()
+            tuple = parse_html(html_string)
+            tmp = {
+                'title': tuple[0],
+                'body': tuple[1],
+            }
+            data = json.dumps(tmp)
+            es.index(index='wikipedia', id=i, body=data)
+            i = i + 1
+            # print("id:" + ' ' + str(i) + " added")
     # Fill in the code here
 
 
