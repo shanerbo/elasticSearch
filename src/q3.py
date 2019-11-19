@@ -162,7 +162,7 @@ def how_does_rank_work() -> str:
           " In Q3.2, we only interested in tour or lake in AB, BC and WA, so we need to boost\n" \
           "documents that contains BC, AB and WA, and BC should be the top of result. That's so we \n" \
           "have to boost score of documents contains BC. Also we need to, for example, bind BC and \n" \
-          "British Columbia together. So that we would not missing any documents \n"
+          "British Columbia together. So that we would not missing any documents. \n"
     return ans
 
 
